@@ -18,7 +18,8 @@ You can register and deploy these templates by using the AWS Proton console. To 
 First, make sure you have the AWS CLI installed, and configured. Run the following command to set an environment variable with your account ID:
 
 ```
-account_id=`aws sts get-caller-identity|jq -r ".Account"`
+export account_id=`aws sts get-caller-identity|jq -r ".Account"`
+export account_name='account_name_here'
 ```
 
 ### Configure the AWS CLI
@@ -42,7 +43,7 @@ Create the S3 bucket to store your templates:
 ```
 aws s3api create-bucket \
   --region us-west-2 \
-  --bucket "proton-cli-templates-${account_id}" \
+  --bucket "proton-${account_name}-test" \
   --create-bucket-configuration LocationConstraint=us-west-2
 ```
 
@@ -81,17 +82,17 @@ First, create an environment template, which will contain all of the environment
 ```
 aws proton-preview create-environment-template \
   --region us-west-2 \
-  --template-name "public-vpc" \
-  --display-name "PublicVPC" \
-  --description "VPC with Public Access and ECS Cluster"
+  --template-name "proton-ecs" \
+  --display-name "ProtonECS" \
+  --description "ECS cluster"
 ```
 
-Then, create a new major version for the `public-vpc` environment template.
+Then, create a new major version for the `proton-ecs` environment template.
 
 ```
 aws proton-preview create-environment-template-major-version \
   --region us-west-2 \
-  --template-name "public-vpc" \
+  --template-name "proton-ecs" \
   --description "Version 1"
 ```
 
@@ -100,16 +101,16 @@ Now create a minor version which contains the contents of the sample environment
 ```
 tar -zcvf env-template.tar.gz environment/
 
-aws s3 cp env-template.tar.gz s3://proton-cli-templates-${account_id}/env-template.tar.gz --region us-west-2
+aws s3 cp env-template.tar.gz s3://proton-${account_name}-test/env-template.tar.gz --region us-west-2
 
 rm env-template.tar.gz
 
 aws proton-preview create-environment-template-minor-version \
   --region us-west-2 \
-  --template-name "public-vpc" \
+  --template-name "proton-ecs" \
   --description "Version 2" \
   --major-version-id "1" \
-  --source-s3-bucket proton-cli-templates-${account_id} \
+  --source-s3-bucket proton-${account_name}-test \
   --source-s3-key env-template.tar.gz
 ```
 
@@ -118,7 +119,7 @@ Wait for the environment template minor version to be successfully registered:
 ```
 aws proton-preview wait environment-template-registration-complete \
   --region us-west-2 \
-  --template-name "public-vpc" \
+  --template-name "proton-ecs" \
   --major-version-id "1" \
   --minor-version-id "0"
 ```
@@ -128,7 +129,7 @@ You can now publish the environment template minor version, making it available 
 ```
 aws proton-preview update-environment-template-minor-version \
   --region us-west-2 \
-  --template-name "public-vpc" \
+  --template-name "proton-ecs" \
   --major-version-id "1" \
   --minor-version-id "0" \
   --status "PUBLISHED"
@@ -148,14 +149,14 @@ aws proton-preview create-service-template \
   --description "Fargate Service with an Application Load Balancer"
 ```
 
-Then, create a major version for the `lb-fargate-service` service template and associate it with the `public-vpc` environment template created above.
+Then, create a major version for the `lb-fargate-service` service template and associate it with the `proton-ecs` environment template created above.
 
 ```
 aws proton-preview create-service-template-major-version \
   --region us-west-2 \
   --template-name "lb-fargate-service" \
   --description "Version 1" \
-  --compatible-environment-template-major-version-arns arn:aws:proton:us-west-2:${account_id}:environment-template/public-vpc:1
+  --compatible-environment-template-major-version-arns arn:aws:proton:us-west-2:${account_id}:environment-template/proton-ecs:1
 ```
 
 Now create a minor version which contains the contents of the sample service template. Compress the sample template files and register the minor version:
@@ -163,7 +164,7 @@ Now create a minor version which contains the contents of the sample service tem
 ```
 tar -zcvf svc-template.tar.gz service/
 
-aws s3 cp svc-template.tar.gz s3://proton-cli-templates-${account_id}/svc-template.tar.gz --region us-west-2
+aws s3 cp svc-template.tar.gz s3://proton-${account_name}-test/svc-template.tar.gz --region us-west-2
 
 rm svc-template.tar.gz
 
@@ -172,7 +173,7 @@ aws proton-preview create-service-template-minor-version \
   --template-name "lb-fargate-service" \
   --description "Version 1" \
   --major-version-id "1" \
-  --source-s3-bucket proton-cli-templates-${account_id} \
+  --source-s3-bucket proton-${account_name}-test \
   --source-s3-key svc-template.tar.gz
 ```
 
@@ -207,7 +208,7 @@ First, deploy a Proton environment. This command reads your environment spec at 
 aws proton-preview create-environment \
   --region us-west-2 \
   --environment-name "Beta" \
-  --environment-template-arn arn:aws:proton:us-west-2:${account_id}:environment-template/public-vpc \
+  --environment-template-arn arn:aws:proton:us-west-2:${account_id}:environment-template/proton-ecs \
   --template-major-version-id 1 \
   --proton-service-role-arn arn:aws:iam::${account_id}:role/ProtonServiceRole \
   --spec file://specs/env-spec.yaml
