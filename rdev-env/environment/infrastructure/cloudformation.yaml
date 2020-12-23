@@ -1,0 +1,59 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Rdev environment test
+Mappings:
+  # The VPC and subnet configuration is passed in via the environment spec.
+  SubnetConfig:
+    VPC:
+      CIDR: '{{ environment.vpc_cidr}}'
+    PublicOne:
+      CIDR: '{{ environment.subnet_one_cidr}}'
+    PublicTwo:
+      CIDR: '{{ environment.subnet_two_cidr}}'
+Resources:
+  # ECS Resources
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+
+  # A security group for the containers we will run in Fargate.
+  # Rules are added to this security group based on what ingress you
+  # add for the cluster.
+  ContainerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Access to the Fargate containers
+      VpcId: '{{ environment.vpc_id }}'
+
+  # This is a role which is used by the ECS tasks themselves.
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [ecs-tasks.amazonaws.com]
+          Action: ['sts:AssumeRole']
+      Path: /
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+
+# These output values will be available to service templates to use.
+Outputs:
+  ClusterName:
+    Description: The name of the ECS cluster
+    Value: !Ref 'ECSCluster'
+  ECSTaskExecutionRole:
+    Description: The ARN of the ECS role
+    Value: !GetAtt 'ECSTaskExecutionRole.Arn'
+  VpcId:
+    Description: The ID of the VPC that this stack is deployed in
+    Value: '{{ environment.vpc_id }}'
+  PublicSubnetOne:
+    Description: Public subnet one
+    Value: '{{ environment.subnet_id_one }}'
+  PublicSubnetTwo:
+    Description: Public subnet two
+    Value: '{{ environment.subnet_id_two }}'
+  ContainerSecurityGroup:
+    Description: A security group used to allow Fargate containers to receive traffic
+    Value: !Ref 'ContainerSecurityGroup'

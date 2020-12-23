@@ -1,0 +1,18 @@
+schema:
+  format:
+    openapi: "3.0.0"
+  environment_input_type: "PublicEnvironmentInput"
+  types:
+    PublicEnvironmentInput:
+      type: object
+      description: "Input properties for my environment"
+      properties:
+        vpc_id:
+          type: string
+          description: "VPC ID"
+        subnet_id_one:
+          type: string
+          description: "Subnet ID for subnet one"
+        subnet_id_two:
+          type: string
+          description: "Subnet ID for subnet Two"
