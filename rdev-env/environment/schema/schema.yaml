@@ -10,6 +10,12 @@ schema:
         vpc_id:
           type: string
           description: "VPC ID"
+        ami_id:
+          type: string
+          description: "AMI ID for ecs/ec2 instances"
+        ssh_key_name:
+          type: string
+          description: "SSH Key Name"
         subnet_id_one:
           type: string
           description: "Subnet ID for subnet one"

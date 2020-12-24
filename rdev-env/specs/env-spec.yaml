@@ -3,3 +3,5 @@ spec:
   vpc_id: "xxxxx"
   subnet_id_one: "yyyy"
   subnet_id_two: "zzzzz"
+  ecs_image_id: "00000"
+  ssh_key_name: "asdfasdf"
